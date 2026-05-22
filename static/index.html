@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steelman Counter-Argument Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 960px;
+    padding: 40px 24px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-bottom: 8px;
+  }
+  header p {
+    color: #8b949e;
+    font-size: 0.95rem;
+  }
+
+  .input-section {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .input-section label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .input-section textarea {
+    width: 100%;
+    height: 140px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding: 14px 16px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .input-section textarea:focus {
+    outline: none;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  }
+  .input-section textarea::placeholder {
+    color: #484f58;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: #238636;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #2ea043;
+  }
+  .btn-primary:active {
+    background: #196c2e;
+  }
+  .btn-primary:disabled {
+    background: #21262d;
+    color: #484f58;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+  }
+  .btn-secondary:hover {
+    background: #30363d;
+  }
+
+  .spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    background: #490202;
+    border: 1px solid #bd3838;
+    color: #ffa198;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: none;
+  }
+
+  .results {
+    display: none;
+  }
+  .results.show {
+    display: block;
+  }
+
+  .restated {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  .restated h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #58a6ff;
+    margin-bottom: 8px;
+  }
+  .restated p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: #f0f6fc;
+    font-style: italic;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 720px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card-num {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b949e;
+  }
+  .card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    line-height: 1.4;
+  }
+  .card p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #8b949e;
+    flex: 1;
+  }
+
+  .severity-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .severity-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #21262d;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .severity-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease, background 0.8s ease;
+  }
+  .severity-val {
+    font-size: 0.85rem;
+    font-weight: 700;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .summary {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  @media (max-width: 720px) {
+    .summary { flex-direction: column; }
+  }
+  .summary-gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 100px;
+  }
+  .gauge-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    transition: background 0.6s ease;
+  }
+  .gauge-label {
+    font-size: 0.72rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .summary-text h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b949e;
+    margin-bottom: 8px;
+  }
+  .summary-text p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: #c9d1d9;
+  }
+
+  .char-count {
+    font-size: 0.75rem;
+    color: #484f58;
+    text-align: right;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Steelman Counter-Argument Generator</h1>
+    <p>Enter any argument. The AI will generate the 3 strongest counter-arguments &mdash; steelman style. Find your blind spots before others do.</p>
+  </header>
+
+  <div class="input-section">
+    <label for="argument">Your Argument</label>
+    <textarea id="argument" placeholder="e.g. &#39;Remote work is strictly better than office work for all knowledge workers.&#39;"></textarea>
+    <div class="char-count"><span id="charCount">0</span> / 4000</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+        <span id="btnText">Generate Counter-Arguments</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="results" id="results">
+    <div class="restated" id="restatedBlock">
+      <h3>Restated Argument (Strongest Form)</h3>
+      <p id="restatedText"></p>
+    </div>
+
+    <div class="cards" id="cardsContainer"></div>
+
+    <div class="summary">
+      <div class="summary-gauge">
+        <div class="gauge-circle" id="gaugeCircle">-</div>
+        <span class="gauge-label">Avg Severity</span>
+      </div>
+      <div class="summary-text">
+        <h3>Overall Verdict</h3>
+        <p id="verdictText"></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const textarea = document.getElementById('argument');
+const charCount = document.getElementById('charCount');
+const generateBtn = document.getElementById('generateBtn');
+const btnText = document.getElementById('btnText');
+const spinner = document.getElementById('spinner');
+const errorMsg = document.getElementById('errorMsg');
+const results = document.getElementById('results');
+
+textarea.addEventListener('input', () => {
+  charCount.textContent = textarea.value.length;
+});
+
+function getSeverityColor(s) {
+  if (s <= 20) return { bar: '#238636', text: '#3fb950' };
+  if (s <= 40) return { bar: '#7ee787', text: '#7ee787' };
+  if (s <= 60) return { bar: '#d29922', text: '#d29922' };
+  if (s <= 80) return { bar: '#f0883e', text: '#f0883e' };
+  return { bar: '#f85149', text: '#f85149' };
+}
+
+function getVerdictColor(avg) {
+  if (avg <= 30) return '#238636';
+  if (avg <= 55) return '#d29922';
+  return '#f85149';
+}
+
+function hideError() {
+  errorMsg.style.display = 'none';
+}
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.style.display = 'block';
+}
+
+function setLoading(loading) {
+  generateBtn.disabled = loading;
+  spinner.style.display = loading ? 'inline-block' : 'none';
+  btnText.textContent = loading ? 'Generating...' : 'Generate Counter-Arguments';
+}
+
+async function generate() {
+  const arg = textarea.value.trim();
+  hideError();
+  results.classList.remove('show');
+
+  if (!arg) {
+    showError('Please enter an argument.');
+    return;
+  }
+  if (arg.length > 4000) {
+    showError('Argument is too long (max 4000 characters).');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ argument: arg }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showError(data.error || 'Unknown error');
+      return;
+    }
+
+    renderResults(data);
+    results.classList.add('show');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  catch (err) {
+    showError('Network error: ' + err.message);
+  }
+  finally {
+    setLoading(false);
+  }
+}
+
+function renderResults(data) {
+  document.getElementById('restatedText').textContent = data.restated_argument;
+
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = '';
+
+  data.counterarguments.forEach((ca, i) => {
+    const color = getSeverityColor(ca.severity);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-num">Counter #${i + 1}</div>
+      <h4>${escapeHtml(ca.title)}</h4>
+      <p>${escapeHtml(ca.content)}</p>
+      <div class="severity-wrap">
+        <div class="severity-bar-bg">
+          <div class="severity-bar-fill" style="width:${ca.severity}%;background:${color.bar};"></div>
+        </div>
+        <span class="severity-val" style="color:${color.text};">${ca.severity}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  const avg = Math.round(data.average_severity);
+  const gauge = document.getElementById('gaugeCircle');
+  gauge.textContent = avg;
+  gauge.style.background = getVerdictColor(avg);
+
+  document.getElementById('verdictText').textContent = data.verdict;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function clearAll() {
+  textarea.value = '';
+  charCount.textContent = '0';
+  hideError();
+  results.classList.remove('show');
+  textarea.focus();
+}
+</script>
+</body>
+</html>
